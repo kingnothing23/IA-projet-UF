@@ -4,8 +4,15 @@ import os
 
 # === PARAMÈTRES À AJUSTER ===
 CIRCULARITY_THRESHOLD = 0.88     # <--- plus haut = plus strict (forme)
-GRADIENT_VARIANCE_THRESHOLD = 150  # <--- plus bas = plus sensible (surface)
-IMG_PATH = "piece_test.jpg"       # <--- chemin vers ton image à tester
+GRADIENT_VARIANCE_THRESHOLD = 20000  # <--- plus bas = plus sensible (surface)
+IMG_PATH = "google2.jpg"       # <--- chemin vers ton image à tester
+
+
+#FONCTIONS
+
+
+
+
 
 # === LECTURE ET PRÉTRAITEMENT ===
 img = cv2.imread(IMG_PATH)
@@ -15,13 +22,26 @@ if img is None:
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 blur = cv2.GaussianBlur(gray, (5, 5), 0)
 
+# AJOUT : Utilisation de CLAHE pour améliorer le contraste local
+clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8)) # Ajustez clipLimit si besoin
+contrasted_gray = clahe.apply(blur) # Appliquer CLAHE au flou
+
+
+# AJOUT : Utilisation de CLAHE pour améliorer le contraste local
+clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8)) # Ajustez clipLimit si besoin
+contrasted_gray = clahe.apply(blur) # Appliquer CLAHE au flou
+
 # Seuil adaptatif pour isoler la pièce
 thresh = cv2.adaptiveThreshold(
-    blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 51, 5
+    contrasted_gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 31, 8
 )
+# Nettoyage du masque
+kernel = np.ones((5,5), np.uint8)
+thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel, iterations=2)
+thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel, iterations=1)
 
 # === DÉTECTION DE CONTOUR ===
-contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 if not contours:
     raise ValueError("❌ Aucun contour détecté.")
 
@@ -62,7 +82,7 @@ cv2.drawContours(output, [contour], -1, color, 2)
 text = "PIECE OK" if piece_ok else "DEFAUT"
 cv2.putText(output, f"{text}", (30, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.2, color, 3)
 cv2.putText(output, f"Circ: {circularity:.2f}  Var: {gradient_variance:.1f}",
-            (30, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+            (30, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (41, 110, 122), 2)
 
 cv2.imshow("Inspection Capsule", output)
 cv2.waitKey(0)
