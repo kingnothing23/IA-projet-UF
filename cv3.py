@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 # === PARAMÈTRES ===
-IMG_PATH = "80.jpg"  # Testez sur le carré ET sur le bruit
+IMG_PATH = "c.jpg"  # Testez sur le carré ET sur le bruit
 CIRCULARITY_THRESHOLD_CIRCLE = 0.89
 CIRCULARITY_THRESHOLD_SQUARE = 0.82
 
